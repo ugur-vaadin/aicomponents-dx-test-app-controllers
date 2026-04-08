@@ -1,38 +1,73 @@
 package com.vaadin.dx.solutions;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import javax.sql.DataSource;
 
+import com.vaadin.dx.DatabaseHelper;
+
 import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.openai.api.OpenAiApi;
 
+import com.vaadin.flow.component.ai.grid.GridAIController;
+import com.vaadin.flow.component.ai.orchestrator.AIOrchestrator;
 import com.vaadin.flow.component.ai.provider.DatabaseProvider;
+import com.vaadin.flow.component.ai.provider.SpringAILLMProvider;
+import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.messages.MessageInput;
+import com.vaadin.flow.component.messages.MessageList;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.Route;
 
 /**
- * Solution 1: Implement a DatabaseProvider.
+ * Solution 1: Grid populated from natural language.
  */
 @Route("solution1")
 public class Solution1View extends VerticalLayout {
 
     public Solution1View(DataSource dataSource) {
         var db = new H2DatabaseProvider(dataSource);
-        add(new com.vaadin.flow.component.html.Span(
-                "Schema: " + db.getSchema()));
+
+        // LLM provider
+        var openAiApi = OpenAiApi.builder()
+                .apiKey(System.getenv("OPENAI_API_KEY")).build();
+        var chatModel = OpenAiChatModel.builder().openAiApi(openAiApi)
+                .defaultOptions(OpenAiChatOptions.builder()
+                        .model("gpt-4o-mini").build())
+                .build();
+        var provider = new SpringAILLMProvider(chatModel);
+
+        // Grid + controller
+        var grid = new Grid<Map<String, Object>>();
+        grid.setHeight("400px");
+        grid.setWidthFull();
+        var gridController = new GridAIController(grid, db);
+
+        var systemPrompt = GridAIController.getSystemPrompt();
+
+        // Chat UI
+        var messageList = new MessageList();
+        messageList.setWidthFull();
+        messageList.setMaxHeight("250px");
+        var messageInput = new MessageInput();
+        messageInput.setWidthFull();
+
+        // Orchestrator
+        AIOrchestrator.builder(provider, systemPrompt)
+                .withMessageList(messageList).withInput(messageInput)
+                .withController(gridController).build();
+
+        add(grid, messageList, messageInput);
+        setSizeFull();
+        setPadding(true);
     }
 
     /**
      * DatabaseProvider backed by the H2 DataSource.
      */
-    static class H2DatabaseProvider implements DatabaseProvider {
+    private static class H2DatabaseProvider implements DatabaseProvider {
 
         private static final String SCHEMA = """
                 Tables:
@@ -56,28 +91,7 @@ public class Solution1View extends VerticalLayout {
 
         @Override
         public List<Map<String, Object>> executeQuery(String sql) {
-            try (var conn = dataSource.getConnection();
-                    var stmt = conn.createStatement();
-                    var rs = stmt.executeQuery(sql)) {
-                return resultSetToList(rs);
-            } catch (SQLException e) {
-                throw new RuntimeException("Query failed: " + sql, e);
-            }
-        }
-
-        private static List<Map<String, Object>> resultSetToList(
-                ResultSet rs) throws SQLException {
-            var meta = rs.getMetaData();
-            int cols = meta.getColumnCount();
-            var result = new ArrayList<Map<String, Object>>();
-            while (rs.next()) {
-                var row = new LinkedHashMap<String, Object>();
-                for (int i = 1; i <= cols; i++) {
-                    row.put(meta.getColumnLabel(i), rs.getObject(i));
-                }
-                result.add(row);
-            }
-            return result;
+            return DatabaseHelper.query(dataSource, sql);
         }
     }
 }

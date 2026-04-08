@@ -6,7 +6,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.4.4</version>
+        <version>4.0.5</version>
     </parent>
     <groupId>com.vaadin.dx</groupId>
     <artifactId>aicomponents-dx-test-app-controllers</artifactId>
@@ -16,7 +16,7 @@
     <properties>
         <java.version>21</java.version>
         <vaadin.version>25.2-SNAPSHOT</vaadin.version>
-        <spring-ai.version>1.0.0</spring-ai.version>
+        <spring-ai.version>2.0.0-M4</spring-ai.version>
     </properties>
 
     <dependencyManagement>
@@ -40,11 +40,20 @@
             <groupId>com.vaadin</groupId>
             <artifactId>vaadin-ai-components-flow</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.vaadin</groupId>
+            <artifactId>vaadin-dev-server</artifactId>
+        </dependency>
 
         <!-- Spring AI OpenAI -->
         <dependency>
             <groupId>org.springframework.ai</groupId>
             <artifactId>spring-ai-openai</artifactId>
+            <version>${spring-ai.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-client-chat</artifactId>
             <version>${spring-ai.version}</version>
         </dependency>
 
@@ -90,6 +99,13 @@
             <url>https://maven.vaadin.com/vaadin-prereleases/</url>
             <snapshots>
                 <enabled>true</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>spring-milestones</id>
+            <url>https://repo.spring.io/milestone</url>
+            <snapshots>
+                <enabled>false</enabled>
             </snapshots>
         </repository>
     </repositories>

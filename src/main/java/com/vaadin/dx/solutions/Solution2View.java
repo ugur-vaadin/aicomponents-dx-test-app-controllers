@@ -1,24 +1,22 @@
 package com.vaadin.dx.solutions;
 
-import java.util.Map;
-
 import javax.sql.DataSource;
 
 import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.openai.api.OpenAiApi;
 
-import com.vaadin.flow.component.ai.grid.GridAIController;
+import com.vaadin.flow.component.ai.chart.ChartAIController;
 import com.vaadin.flow.component.ai.orchestrator.AIOrchestrator;
 import com.vaadin.flow.component.ai.provider.SpringAILLMProvider;
-import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.charts.Chart;
 import com.vaadin.flow.component.messages.MessageInput;
 import com.vaadin.flow.component.messages.MessageList;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.Route;
 
 /**
- * Solution 2: Grid populated from natural language.
+ * Solution 2: Chart populated from natural language.
  */
 @Route("solution2")
 public class Solution2View extends VerticalLayout {
@@ -35,13 +33,13 @@ public class Solution2View extends VerticalLayout {
                 .build();
         var provider = new SpringAILLMProvider(chatModel);
 
-        // Grid + controller
-        var grid = new Grid<Map<String, Object>>();
-        grid.setHeight("400px");
-        grid.setWidthFull();
-        var gridController = new GridAIController(grid, db);
+        // Chart + controller
+        var chart = new Chart();
+        chart.setHeight("400px");
+        chart.setWidthFull();
+        var chartController = new ChartAIController(chart, db);
 
-        var systemPrompt = GridAIController.getSystemPrompt();
+        var systemPrompt = ChartAIController.getSystemPrompt();
 
         // Chat UI
         var messageList = new MessageList();
@@ -51,11 +49,11 @@ public class Solution2View extends VerticalLayout {
         messageInput.setWidthFull();
 
         // Orchestrator
-        var orchestrator = AIOrchestrator.builder(provider, systemPrompt)
+        AIOrchestrator.builder(provider, systemPrompt)
                 .withMessageList(messageList).withInput(messageInput)
-                .withController(gridController).build();
+                .withController(chartController).build();
 
-        add(grid, messageList, messageInput);
+        add(chart, messageList, messageInput);
         setSizeFull();
         setPadding(true);
     }

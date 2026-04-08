@@ -38,8 +38,7 @@ public class StateStorage {
      * Retrieves previously persisted data.
      *
      * @param key
-     *            the key returned by {@link #persist(Serializable)} or
-     *            passed to {@link #persist(String, Serializable)}
+     *            the key passed to {@link #persist(String, Serializable)}
      * @return the stored data, or {@code null} if not found
      */
     public static Object retrieve(String key) {

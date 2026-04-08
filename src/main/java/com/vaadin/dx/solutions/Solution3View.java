@@ -1,28 +1,25 @@
 package com.vaadin.dx.solutions;
 
-import java.util.Map;
-
 import javax.sql.DataSource;
 
 import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.openai.api.OpenAiApi;
 
+import com.vaadin.dx.StateStorage;
 import com.vaadin.flow.component.ai.chart.ChartAIController;
-import com.vaadin.flow.component.ai.grid.GridAIController;
+import com.vaadin.flow.component.ai.chart.ChartState;
 import com.vaadin.flow.component.ai.orchestrator.AIOrchestrator;
 import com.vaadin.flow.component.ai.provider.SpringAILLMProvider;
 import com.vaadin.flow.component.charts.Chart;
-import com.vaadin.flow.component.grid.Grid;
-import com.vaadin.flow.component.html.H3;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.messages.MessageInput;
 import com.vaadin.flow.component.messages.MessageList;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.Route;
 
 /**
- * Solution 3: Grid + Chart with shared orchestrator.
+ * Solution 3: Chart state persistence across page refresh.
  */
 @Route("solution3")
 public class Solution3View extends VerticalLayout {
@@ -39,21 +36,20 @@ public class Solution3View extends VerticalLayout {
                 .build();
         var provider = new SpringAILLMProvider(chatModel);
 
-        // Grid + controller
-        var grid = new Grid<Map<String, Object>>();
-        grid.setHeight("350px");
-        grid.setWidthFull();
-        var gridController = new GridAIController(grid, db);
-
         // Chart + controller
         var chart = new Chart();
-        chart.setHeight("350px");
+        chart.setHeight("400px");
         chart.setWidthFull();
         var chartController = new ChartAIController(chart, db);
 
-        // Combined system prompt
-        var systemPrompt = GridAIController.getSystemPrompt() + "\n\n"
-                + ChartAIController.getSystemPrompt();
+        // Restore state from storage
+        var savedState = (ChartState) StateStorage
+                .retrieve("chart-state");
+        if (savedState != null) {
+            chartController.restoreState(savedState);
+        }
+
+        var systemPrompt = ChartAIController.getSystemPrompt();
 
         // Chat UI
         var messageList = new MessageList();
@@ -62,24 +58,16 @@ public class Solution3View extends VerticalLayout {
         var messageInput = new MessageInput();
         messageInput.setWidthFull();
 
-        // Orchestrator — note: only one controller supported
-        var orchestrator = AIOrchestrator.builder(provider, systemPrompt)
+        // Save state on every change
+        chartController.addStateChangeListener(state ->
+                StateStorage.persist("chart-state", state));
+
+        // Orchestrator
+        AIOrchestrator.builder(provider, systemPrompt)
                 .withMessageList(messageList).withInput(messageInput)
-                .withController(gridController).build();
+                .withController(chartController).build();
 
-        // Layout
-        var gridSection = new VerticalLayout(new H3("Grid"), grid);
-        gridSection.setPadding(false);
-        gridSection.setWidth("50%");
-
-        var chartSection = new VerticalLayout(new H3("Chart"), chart);
-        chartSection.setPadding(false);
-        chartSection.setWidth("50%");
-
-        var visualizations = new HorizontalLayout(gridSection, chartSection);
-        visualizations.setWidthFull();
-
-        add(visualizations, messageList, messageInput);
+        add(chart, messageList, messageInput);
         setSizeFull();
         setPadding(true);
     }
