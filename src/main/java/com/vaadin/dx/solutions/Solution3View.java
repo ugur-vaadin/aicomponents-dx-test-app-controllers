@@ -17,6 +17,9 @@ import com.vaadin.flow.component.charts.Chart;
 import com.vaadin.flow.component.messages.MessageInput;
 import com.vaadin.flow.component.messages.MessageList;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.upload.UploadDropZone;
+import com.vaadin.flow.component.upload.UploadFileList;
+import com.vaadin.flow.component.upload.UploadManager;
 import com.vaadin.flow.router.Route;
 
 import java.util.List;
@@ -26,10 +29,17 @@ import java.util.Map;
  * Solution 3: Chart state persistence across page refresh.
  */
 @Route("solution3")
-public class Solution3View extends VerticalLayout {
+public class Solution3View extends UploadDropZone {
 
     public Solution3View(DataSource dataSource) {
         var db = new H2DatabaseProvider(dataSource);
+
+        // Layout
+        var layout = new VerticalLayout();
+        layout.setWidth("600px");
+        layout.setHeightFull();
+        layout.setPadding(true);
+        setContent(layout);
 
         // LLM provider
         var openAiApi = OpenAiApi.builder()
@@ -39,6 +49,17 @@ public class Solution3View extends VerticalLayout {
                         .model("gpt-5.4-mini").build())
                 .build();
         var provider = new SpringAILLMProvider(chatModel);
+
+        // Chat UI
+        var messageList = new MessageList();
+        messageList.setWidthFull();
+        messageList.setMaxHeight("250px");
+        var messageInput = new MessageInput();
+        messageInput.setWidthFull();
+        var uploadManager = new UploadManager(this);
+        setUploadManager(uploadManager);
+        var fileList = new UploadFileList(uploadManager);
+        fileList.setWidthFull();
 
         // Chart + controller
         var chart = new Chart();
@@ -53,27 +74,19 @@ public class Solution3View extends VerticalLayout {
             chartController.restoreState(savedState);
         }
 
-        var systemPrompt = ChartAIController.getSystemPrompt();
-
-        // Chat UI
-        var messageList = new MessageList();
-        messageList.setWidthFull();
-        messageList.setMaxHeight("250px");
-        var messageInput = new MessageInput();
-        messageInput.setWidthFull();
-
         // Save state on every change
         chartController.addStateChangeListener(state ->
                 StateStorage.persist("chart-state", state));
 
+        var systemPrompt = ChartAIController.getSystemPrompt();
+
         // Orchestrator
         AIOrchestrator.builder(provider, systemPrompt)
                 .withMessageList(messageList).withInput(messageInput)
+                .withFileReceiver(uploadManager)
                 .withController(chartController).build();
 
-        add(chart, messageList, messageInput);
-        setSizeFull();
-        setPadding(true);
+        layout.add(chart, fileList, messageList, messageInput);
     }
 
     /**

@@ -15,6 +15,9 @@ import com.vaadin.flow.component.charts.Chart;
 import com.vaadin.flow.component.messages.MessageInput;
 import com.vaadin.flow.component.messages.MessageList;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.upload.UploadDropZone;
+import com.vaadin.flow.component.upload.UploadFileList;
+import com.vaadin.flow.component.upload.UploadManager;
 import com.vaadin.flow.router.Route;
 
 import java.util.List;
@@ -24,10 +27,17 @@ import java.util.Map;
  * Solution 2: Chart populated from natural language.
  */
 @Route("solution2")
-public class Solution2View extends VerticalLayout {
+public class Solution2View extends UploadDropZone {
 
     public Solution2View(DataSource dataSource) {
         var db = new H2DatabaseProvider(dataSource);
+
+        // Layout
+        var layout = new VerticalLayout();
+        layout.setWidth("600px");
+        layout.setHeightFull();
+        layout.setPadding(true);
+        setContent(layout);
 
         // LLM provider
         var openAiApi = OpenAiApi.builder()
@@ -38,6 +48,17 @@ public class Solution2View extends VerticalLayout {
                 .build();
         var provider = new SpringAILLMProvider(chatModel);
 
+        // Chat UI
+        var messageList = new MessageList();
+        messageList.setWidthFull();
+        messageList.setMaxHeight("250px");
+        var messageInput = new MessageInput();
+        messageInput.setWidthFull();
+        var uploadManager = new UploadManager(this);
+        setUploadManager(uploadManager);
+        var fileList = new UploadFileList(uploadManager);
+        fileList.setWidthFull();
+
         // Chart + controller
         var chart = new Chart();
         chart.setHeight("400px");
@@ -46,21 +67,13 @@ public class Solution2View extends VerticalLayout {
 
         var systemPrompt = ChartAIController.getSystemPrompt();
 
-        // Chat UI
-        var messageList = new MessageList();
-        messageList.setWidthFull();
-        messageList.setMaxHeight("250px");
-        var messageInput = new MessageInput();
-        messageInput.setWidthFull();
-
         // Orchestrator
         AIOrchestrator.builder(provider, systemPrompt)
                 .withMessageList(messageList).withInput(messageInput)
+                .withFileReceiver(uploadManager)
                 .withController(chartController).build();
 
-        add(chart, messageList, messageInput);
-        setSizeFull();
-        setPadding(true);
+        layout.add(chart, fileList, messageList, messageInput);
     }
 
     /**

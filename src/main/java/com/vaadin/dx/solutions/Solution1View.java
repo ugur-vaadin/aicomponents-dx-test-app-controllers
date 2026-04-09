@@ -19,16 +19,26 @@ import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.messages.MessageInput;
 import com.vaadin.flow.component.messages.MessageList;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.upload.UploadDropZone;
+import com.vaadin.flow.component.upload.UploadFileList;
+import com.vaadin.flow.component.upload.UploadManager;
 import com.vaadin.flow.router.Route;
 
 /**
  * Solution 1: Grid populated from natural language.
  */
 @Route("solution1")
-public class Solution1View extends VerticalLayout {
+public class Solution1View extends UploadDropZone {
 
     public Solution1View(DataSource dataSource) {
         var db = new H2DatabaseProvider(dataSource);
+
+        // Layout
+        var layout = new VerticalLayout();
+        layout.setWidth("600px");
+        layout.setHeightFull();
+        layout.setPadding(true);
+        setContent(layout);
 
         // LLM provider
         var openAiApi = OpenAiApi.builder()
@@ -39,6 +49,17 @@ public class Solution1View extends VerticalLayout {
                 .build();
         var provider = new SpringAILLMProvider(chatModel);
 
+        // Chat UI
+        var messageList = new MessageList();
+        messageList.setWidthFull();
+        messageList.setMaxHeight("250px");
+        var messageInput = new MessageInput();
+        messageInput.setWidthFull();
+        var uploadManager = new UploadManager(this);
+        setUploadManager(uploadManager);
+        var fileList = new UploadFileList(uploadManager);
+        fileList.setWidthFull();
+
         // Grid + controller
         var grid = new Grid<Map<String, Object>>();
         grid.setHeight("400px");
@@ -47,21 +68,13 @@ public class Solution1View extends VerticalLayout {
 
         var systemPrompt = GridAIController.getSystemPrompt();
 
-        // Chat UI
-        var messageList = new MessageList();
-        messageList.setWidthFull();
-        messageList.setMaxHeight("250px");
-        var messageInput = new MessageInput();
-        messageInput.setWidthFull();
-
         // Orchestrator
         AIOrchestrator.builder(provider, systemPrompt)
                 .withMessageList(messageList).withInput(messageInput)
+                .withFileReceiver(uploadManager)
                 .withController(gridController).build();
 
-        add(grid, messageList, messageInput);
-        setSizeFull();
-        setPadding(true);
+        layout.add(grid, fileList, messageList, messageInput);
     }
 
     /**

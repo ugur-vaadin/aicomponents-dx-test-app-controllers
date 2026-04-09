@@ -16,15 +16,25 @@ import com.vaadin.flow.component.ai.provider.SpringAILLMProvider;
 import com.vaadin.flow.component.messages.MessageInput;
 import com.vaadin.flow.component.messages.MessageList;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.upload.UploadDropZone;
+import com.vaadin.flow.component.upload.UploadFileList;
+import com.vaadin.flow.component.upload.UploadManager;
 import com.vaadin.flow.router.Route;
 
 /**
  * Solution 4: Custom AIController that changes background color.
  */
 @Route("solution4")
-public class Solution4View extends VerticalLayout {
+public class Solution4View extends UploadDropZone {
 
     public Solution4View(DataSource dataSource) {
+        // Layout
+        var layout = new VerticalLayout();
+        layout.setWidth("600px");
+        layout.setHeightFull();
+        layout.setPadding(true);
+        setContent(layout);
+
         // LLM provider
         var openAiApi = OpenAiApi.builder()
                 .apiKey(System.getenv("OPENAI_API_KEY")).build();
@@ -34,15 +44,19 @@ public class Solution4View extends VerticalLayout {
                 .build();
         var provider = new SpringAILLMProvider(chatModel);
 
-        // Custom controller
-        var colorController = new BackgroundColorController(this);
-
         // Chat UI
         var messageList = new MessageList();
         messageList.setWidthFull();
-        messageList.setMaxHeight("300px");
+        messageList.setMaxHeight("250px");
         var messageInput = new MessageInput();
         messageInput.setWidthFull();
+        var uploadManager = new UploadManager(this);
+        setUploadManager(uploadManager);
+        var fileList = new UploadFileList(uploadManager);
+        fileList.setWidthFull();
+
+        // Custom controller
+        var colorController = new BackgroundColorController(layout);
 
         var systemPrompt = "You can change the background color of the "
                 + "page. When the user asks, use the "
@@ -51,11 +65,10 @@ public class Solution4View extends VerticalLayout {
         // Orchestrator
         AIOrchestrator.builder(provider, systemPrompt)
                 .withMessageList(messageList).withInput(messageInput)
+                .withFileReceiver(uploadManager)
                 .withController(colorController).build();
 
-        add(messageList, messageInput);
-        setSizeFull();
-        setPadding(true);
+        layout.add(fileList, messageList, messageInput);
     }
 
     /**
