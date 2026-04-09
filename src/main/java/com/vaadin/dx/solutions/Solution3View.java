@@ -2,6 +2,8 @@ package com.vaadin.dx.solutions;
 
 import javax.sql.DataSource;
 
+import com.vaadin.dx.DatabaseHelper;
+import com.vaadin.flow.component.ai.provider.DatabaseProvider;
 import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.openai.api.OpenAiApi;
@@ -12,11 +14,13 @@ import com.vaadin.flow.component.ai.chart.ChartState;
 import com.vaadin.flow.component.ai.orchestrator.AIOrchestrator;
 import com.vaadin.flow.component.ai.provider.SpringAILLMProvider;
 import com.vaadin.flow.component.charts.Chart;
-import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.messages.MessageInput;
 import com.vaadin.flow.component.messages.MessageList;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.Route;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * Solution 3: Chart state persistence across page refresh.
@@ -25,7 +29,7 @@ import com.vaadin.flow.router.Route;
 public class Solution3View extends VerticalLayout {
 
     public Solution3View(DataSource dataSource) {
-        var db = new Solution1View.H2DatabaseProvider(dataSource);
+        var db = new H2DatabaseProvider(dataSource);
 
         // LLM provider
         var openAiApi = OpenAiApi.builder()
@@ -70,5 +74,36 @@ public class Solution3View extends VerticalLayout {
         add(chart, messageList, messageInput);
         setSizeFull();
         setPadding(true);
+    }
+
+    /**
+     * DatabaseProvider backed by the H2 DataSource.
+     */
+    private static class H2DatabaseProvider implements DatabaseProvider {
+
+        private static final String SCHEMA = """
+                Tables:
+                - employees(id INT, name VARCHAR, department VARCHAR, salary DECIMAL, hire_date DATE)
+                - sales(id INT, product VARCHAR, category VARCHAR, region VARCHAR, amount DECIMAL, quantity INT, sale_date DATE)
+                - order_hdr(order_id INT, cust_name VARCHAR, order_dt DATE, status VARCHAR)
+                - order_dtl(id INT, order_id INT, product VARCHAR, qty INT, unit_px DECIMAL)
+                - temperatures(id INT, city VARCHAR, month VARCHAR, avg_temp DECIMAL, min_temp DECIMAL, max_temp DECIMAL)
+                """;
+
+        private final DataSource dataSource;
+
+        H2DatabaseProvider(DataSource dataSource) {
+            this.dataSource = dataSource;
+        }
+
+        @Override
+        public String getSchema() {
+            return SCHEMA;
+        }
+
+        @Override
+        public List<Map<String, Object>> executeQuery(String sql) {
+            return DatabaseHelper.query(dataSource, sql);
+        }
     }
 }
