@@ -36,7 +36,7 @@ public class Solution3View extends VerticalLayout {
                 .apiKey(System.getenv("OPENAI_API_KEY")).build();
         var chatModel = OpenAiChatModel.builder().openAiApi(openAiApi)
                 .defaultOptions(OpenAiChatOptions.builder()
-                        .model("gpt-4o-mini").build())
+                        .model("gpt-5.4-mini").build())
                 .build();
         var provider = new SpringAILLMProvider(chatModel);
 
