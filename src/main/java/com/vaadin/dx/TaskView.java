@@ -2,6 +2,7 @@ package com.vaadin.dx;
 
 import javax.sql.DataSource;
 
+import com.vaadin.flow.component.html.Span;
 import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.openai.api.OpenAiApi;
@@ -10,6 +11,7 @@ import com.vaadin.flow.component.ai.orchestrator.AIOrchestrator;
 import com.vaadin.flow.component.ai.provider.SpringAILLMProvider;
 import com.vaadin.flow.component.messages.MessageInput;
 import com.vaadin.flow.component.messages.MessageList;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.upload.UploadDropZone;
 import com.vaadin.flow.component.upload.UploadFileList;
@@ -43,12 +45,7 @@ import com.vaadin.flow.router.Route;
 public class TaskView extends UploadDropZone {
 
     public TaskView(DataSource dataSource) {
-        // Layout
-        var layout = new VerticalLayout();
-        layout.setWidth("600px");
-        layout.setHeightFull();
-        layout.setPadding(true);
-        setContent(layout);
+        setSizeFull();
 
         // LLM provider
         var openAiApi = OpenAiApi.builder()
@@ -62,13 +59,27 @@ public class TaskView extends UploadDropZone {
         // Chat UI
         var messageList = new MessageList();
         messageList.setWidthFull();
-        messageList.setMaxHeight("250px");
+        messageList.setHeightFull();
         var messageInput = new MessageInput();
         messageInput.setWidthFull();
         var uploadManager = new UploadManager(this);
         setUploadManager(uploadManager);
         var fileList = new UploadFileList(uploadManager);
         fileList.setWidthFull();
+
+        // Chat panel (left side)
+        var chatPanel = new VerticalLayout(fileList, messageList,
+                messageInput);
+        chatPanel.setWidth("600px");
+        chatPanel.setHeightFull();
+        chatPanel.setPadding(false);
+        chatPanel.setSpacing(false);
+        chatPanel.expand(messageList);
+
+        // Content panel (right side — add components here)
+        var contentPanel = new VerticalLayout(new Span("Content Area"));
+        contentPanel.setHeightFull();
+        contentPanel.setPadding(true);
 
         // Orchestrator
         String systemPrompt = null;
@@ -78,6 +89,10 @@ public class TaskView extends UploadDropZone {
                 .withFileReceiver(uploadManager)
                 .build();
 
-        layout.add(fileList, messageList, messageInput);
+        // Main layout
+        var mainLayout = new HorizontalLayout(chatPanel, contentPanel);
+        mainLayout.setSizeFull();
+        mainLayout.expand(contentPanel);
+        setContent(mainLayout);
     }
 }

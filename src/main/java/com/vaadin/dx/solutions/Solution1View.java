@@ -7,6 +7,7 @@ import javax.sql.DataSource;
 
 import com.vaadin.dx.DatabaseHelper;
 
+import com.vaadin.flow.component.html.Span;
 import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.openai.api.OpenAiApi;
@@ -18,6 +19,7 @@ import com.vaadin.flow.component.ai.provider.SpringAILLMProvider;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.messages.MessageInput;
 import com.vaadin.flow.component.messages.MessageList;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.upload.UploadDropZone;
 import com.vaadin.flow.component.upload.UploadFileList;
@@ -31,16 +33,18 @@ import com.vaadin.flow.router.Route;
 public class Solution1View extends UploadDropZone {
 
     public Solution1View(DataSource dataSource) {
+        setSizeFull();
+
+        // --- Task 1: DatabaseProvider + Grid ---
         var db = new H2DatabaseProvider(dataSource);
 
-        // Layout
-        var layout = new VerticalLayout();
-        layout.setWidth("600px");
-        layout.setHeightFull();
-        layout.setPadding(true);
-        setContent(layout);
+        var grid = new Grid<Map<String, Object>>();
+        grid.setSizeFull();
+        var gridController = new GridAIController(grid, db);
 
-        // LLM provider
+        var systemPrompt = GridAIController.getSystemPrompt();
+
+        // --- UI setup ---
         var openAiApi = OpenAiApi.builder()
                 .apiKey(System.getenv("OPENAI_API_KEY")).build();
         var chatModel = OpenAiChatModel.builder().openAiApi(openAiApi)
@@ -49,10 +53,9 @@ public class Solution1View extends UploadDropZone {
                 .build();
         var provider = new SpringAILLMProvider(chatModel);
 
-        // Chat UI
         var messageList = new MessageList();
         messageList.setWidthFull();
-        messageList.setMaxHeight("250px");
+        messageList.setHeightFull();
         var messageInput = new MessageInput();
         messageInput.setWidthFull();
         var uploadManager = new UploadManager(this);
@@ -60,27 +63,33 @@ public class Solution1View extends UploadDropZone {
         var fileList = new UploadFileList(uploadManager);
         fileList.setWidthFull();
 
-        // Grid + controller
-        var grid = new Grid<Map<String, Object>>();
-        grid.setHeight("400px");
-        grid.setWidthFull();
-        var gridController = new GridAIController(grid, db);
+        var chatPanel = new VerticalLayout(fileList, messageList,
+                messageInput);
+        chatPanel.setWidth("600px");
+        chatPanel.setHeightFull();
+        chatPanel.setPadding(false);
+        chatPanel.setSpacing(false);
+        chatPanel.expand(messageList);
 
-        var systemPrompt = GridAIController.getSystemPrompt();
+        var contentPanel = new VerticalLayout(new Span("Content Area"), grid);
+        contentPanel.setHeightFull();
+        contentPanel.setPadding(true);
 
-        // Orchestrator
         AIOrchestrator.builder(provider, systemPrompt)
                 .withMessageList(messageList).withInput(messageInput)
                 .withFileReceiver(uploadManager)
                 .withController(gridController).build();
 
-        layout.add(grid, fileList, messageList, messageInput);
+        var mainLayout = new HorizontalLayout(chatPanel, contentPanel);
+        mainLayout.setSizeFull();
+        mainLayout.expand(contentPanel);
+        setContent(mainLayout);
     }
 
     /**
      * DatabaseProvider backed by the H2 DataSource.
      */
-    private static class H2DatabaseProvider implements DatabaseProvider {
+    static class H2DatabaseProvider implements DatabaseProvider {
 
         private static final String SCHEMA = """
                 Tables:

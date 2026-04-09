@@ -5,6 +5,7 @@ import java.util.List;
 import javax.sql.DataSource;
 
 import com.vaadin.dx.ViewHelper;
+import com.vaadin.flow.component.html.Span;
 import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.openai.api.OpenAiApi;
@@ -15,6 +16,7 @@ import com.vaadin.flow.component.ai.provider.LLMProvider;
 import com.vaadin.flow.component.ai.provider.SpringAILLMProvider;
 import com.vaadin.flow.component.messages.MessageInput;
 import com.vaadin.flow.component.messages.MessageList;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.upload.UploadDropZone;
 import com.vaadin.flow.component.upload.UploadFileList;
@@ -28,14 +30,16 @@ import com.vaadin.flow.router.Route;
 public class Solution4View extends UploadDropZone {
 
     public Solution4View(DataSource dataSource) {
-        // Layout
-        var layout = new VerticalLayout();
-        layout.setWidth("600px");
-        layout.setHeightFull();
-        layout.setPadding(true);
-        setContent(layout);
+        setSizeFull();
 
-        // LLM provider
+        // --- Task 4: Custom controller ---
+        var colorController = new BackgroundColorController(this);
+
+        var systemPrompt = "You can change the background color of the "
+                + "page. When the user asks, use the "
+                + "set_background_color tool.";
+
+        // --- UI setup ---
         var openAiApi = OpenAiApi.builder()
                 .apiKey(System.getenv("OPENAI_API_KEY")).build();
         var chatModel = OpenAiChatModel.builder().openAiApi(openAiApi)
@@ -44,10 +48,9 @@ public class Solution4View extends UploadDropZone {
                 .build();
         var provider = new SpringAILLMProvider(chatModel);
 
-        // Chat UI
         var messageList = new MessageList();
         messageList.setWidthFull();
-        messageList.setMaxHeight("250px");
+        messageList.setHeightFull();
         var messageInput = new MessageInput();
         messageInput.setWidthFull();
         var uploadManager = new UploadManager(this);
@@ -55,20 +58,27 @@ public class Solution4View extends UploadDropZone {
         var fileList = new UploadFileList(uploadManager);
         fileList.setWidthFull();
 
-        // Custom controller
-        var colorController = new BackgroundColorController(layout);
+        var chatPanel = new VerticalLayout(fileList, messageList,
+                messageInput);
+        chatPanel.setWidth("600px");
+        chatPanel.setHeightFull();
+        chatPanel.setPadding(false);
+        chatPanel.setSpacing(false);
+        chatPanel.expand(messageList);
 
-        var systemPrompt = "You can change the background color of the "
-                + "page. When the user asks, use the "
-                + "set_background_color tool.";
+        var contentPanel = new VerticalLayout(new Span("Content Area"));
+        contentPanel.setHeightFull();
+        contentPanel.setPadding(true);
 
-        // Orchestrator
         AIOrchestrator.builder(provider, systemPrompt)
                 .withMessageList(messageList).withInput(messageInput)
                 .withFileReceiver(uploadManager)
                 .withController(colorController).build();
 
-        layout.add(fileList, messageList, messageInput);
+        var mainLayout = new HorizontalLayout(chatPanel, contentPanel);
+        mainLayout.setSizeFull();
+        mainLayout.expand(contentPanel);
+        setContent(mainLayout);
     }
 
     /**
@@ -77,9 +87,9 @@ public class Solution4View extends UploadDropZone {
      */
     static class BackgroundColorController implements AIController {
 
-        private final VerticalLayout view;
+        private final UploadDropZone view;
 
-        BackgroundColorController(VerticalLayout view) {
+        BackgroundColorController(UploadDropZone view) {
             this.view = view;
         }
 

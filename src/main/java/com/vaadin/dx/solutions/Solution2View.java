@@ -2,8 +2,7 @@ package com.vaadin.dx.solutions;
 
 import javax.sql.DataSource;
 
-import com.vaadin.dx.DatabaseHelper;
-import com.vaadin.flow.component.ai.provider.DatabaseProvider;
+import com.vaadin.flow.component.html.Span;
 import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.openai.api.OpenAiApi;
@@ -14,14 +13,12 @@ import com.vaadin.flow.component.ai.provider.SpringAILLMProvider;
 import com.vaadin.flow.component.charts.Chart;
 import com.vaadin.flow.component.messages.MessageInput;
 import com.vaadin.flow.component.messages.MessageList;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.upload.UploadDropZone;
 import com.vaadin.flow.component.upload.UploadFileList;
 import com.vaadin.flow.component.upload.UploadManager;
 import com.vaadin.flow.router.Route;
-
-import java.util.List;
-import java.util.Map;
 
 /**
  * Solution 2: Chart populated from natural language.
@@ -30,16 +27,18 @@ import java.util.Map;
 public class Solution2View extends UploadDropZone {
 
     public Solution2View(DataSource dataSource) {
-        var db = new H2DatabaseProvider(dataSource);
+        setSizeFull();
 
-        // Layout
-        var layout = new VerticalLayout();
-        layout.setWidth("600px");
-        layout.setHeightFull();
-        layout.setPadding(true);
-        setContent(layout);
+        // --- Task 2: Chart ---
+        var db = new Solution1View.H2DatabaseProvider(dataSource);
 
-        // LLM provider
+        var chart = new Chart();
+        chart.setSizeFull();
+        var chartController = new ChartAIController(chart, db);
+
+        var systemPrompt = ChartAIController.getSystemPrompt();
+
+        // --- UI setup ---
         var openAiApi = OpenAiApi.builder()
                 .apiKey(System.getenv("OPENAI_API_KEY")).build();
         var chatModel = OpenAiChatModel.builder().openAiApi(openAiApi)
@@ -48,10 +47,9 @@ public class Solution2View extends UploadDropZone {
                 .build();
         var provider = new SpringAILLMProvider(chatModel);
 
-        // Chat UI
         var messageList = new MessageList();
         messageList.setWidthFull();
-        messageList.setMaxHeight("250px");
+        messageList.setHeightFull();
         var messageInput = new MessageInput();
         messageInput.setWidthFull();
         var uploadManager = new UploadManager(this);
@@ -59,51 +57,26 @@ public class Solution2View extends UploadDropZone {
         var fileList = new UploadFileList(uploadManager);
         fileList.setWidthFull();
 
-        // Chart + controller
-        var chart = new Chart();
-        chart.setHeight("400px");
-        chart.setWidthFull();
-        var chartController = new ChartAIController(chart, db);
+        var chatPanel = new VerticalLayout(fileList, messageList,
+                messageInput);
+        chatPanel.setWidth("600px");
+        chatPanel.setHeightFull();
+        chatPanel.setPadding(false);
+        chatPanel.setSpacing(false);
+        chatPanel.expand(messageList);
 
-        var systemPrompt = ChartAIController.getSystemPrompt();
+        var contentPanel = new VerticalLayout(new Span("Content Area"), chart);
+        contentPanel.setHeightFull();
+        contentPanel.setPadding(true);
 
-        // Orchestrator
         AIOrchestrator.builder(provider, systemPrompt)
                 .withMessageList(messageList).withInput(messageInput)
                 .withFileReceiver(uploadManager)
                 .withController(chartController).build();
 
-        layout.add(chart, fileList, messageList, messageInput);
-    }
-
-    /**
-     * DatabaseProvider backed by the H2 DataSource.
-     */
-    private static class H2DatabaseProvider implements DatabaseProvider {
-
-        private static final String SCHEMA = """
-                Tables:
-                - employees(id INT, name VARCHAR, department VARCHAR, salary DECIMAL, hire_date DATE)
-                - sales(id INT, product VARCHAR, category VARCHAR, region VARCHAR, amount DECIMAL, quantity INT, sale_date DATE)
-                - order_hdr(order_id INT, cust_name VARCHAR, order_dt DATE, status VARCHAR)
-                - order_dtl(id INT, order_id INT, product VARCHAR, qty INT, unit_px DECIMAL)
-                - temperatures(id INT, city VARCHAR, month VARCHAR, avg_temp DECIMAL, min_temp DECIMAL, max_temp DECIMAL)
-                """;
-
-        private final DataSource dataSource;
-
-        H2DatabaseProvider(DataSource dataSource) {
-            this.dataSource = dataSource;
-        }
-
-        @Override
-        public String getSchema() {
-            return SCHEMA;
-        }
-
-        @Override
-        public List<Map<String, Object>> executeQuery(String sql) {
-            return DatabaseHelper.query(dataSource, sql);
-        }
+        var mainLayout = new HorizontalLayout(chatPanel, contentPanel);
+        mainLayout.setSizeFull();
+        mainLayout.expand(contentPanel);
+        setContent(mainLayout);
     }
 }
