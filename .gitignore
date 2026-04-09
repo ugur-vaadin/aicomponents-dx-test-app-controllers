@@ -1,0 +1,45 @@
+bin
+target
+integration-tests
+pom.xml.bak
+.env
+
+# Eclipse
+.project
+.settings
+.classpath
+*.iml
+
+# Idea files
+.idea/
+*.iml
+
+# MacOS DS_Store files
+.DS_Store
+
+.vscode
+types.d.ts
+tsconfig.json
+webpack.*
+vite.generated.ts
+/vite.config.ts
+node_modules
+.driver
+package*json
+pnpm*
+.npmrc
+.pnpmfile.cjs
+error-screenshots
+src/main/bundles/
+
+**/frontend/generated
+**/frontend/index.html
+**/frontend/*.tsx
+dev-bundle
+prod.bundle
+.vaadin-node-tasks.lock
+
+# Claude Code
+.claude/*.local.*
+CLAUDE.local.md
+.playwright-cli/
