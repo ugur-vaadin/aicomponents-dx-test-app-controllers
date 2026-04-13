@@ -2,6 +2,8 @@
 
 This is a DX test application for Vaadin AI Components. Participants progressively build AI-powered data views using natural language, with each task building on the previous one.
 
+A non-final version of the documentation can be found at: https://docs-preview-pr-5473.fly.dev/
+
 ## Running the Application
 
 To start the application in development mode, import it into your IDE and run the `Application` class.
