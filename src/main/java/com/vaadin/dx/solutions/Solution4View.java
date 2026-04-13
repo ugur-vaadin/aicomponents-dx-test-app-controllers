@@ -49,6 +49,7 @@ public class Solution4View extends UploadDropZone {
         var provider = new SpringAILLMProvider(chatModel);
 
         var messageList = new MessageList();
+        messageList.setMarkdown(true);
         messageList.setWidthFull();
         messageList.setHeightFull();
         var messageInput = new MessageInput();

@@ -58,6 +58,7 @@ public class TaskView extends UploadDropZone {
 
         // Chat UI
         var messageList = new MessageList();
+        messageList.setMarkdown(true);
         messageList.setWidthFull();
         messageList.setHeightFull();
         var messageInput = new MessageInput();
