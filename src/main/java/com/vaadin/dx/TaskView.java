@@ -21,25 +21,58 @@ import com.vaadin.flow.router.Route;
 /**
  * DX Test — implement each task here.
  * <p>
- * The application has an H2 in-memory database with these tables:
- * - employees(id, name, department, salary, hire_date)
- * - sales(id, product, category, region, amount, quantity, sale_date)
- * - order_hdr(order_id, cust_name, order_dt, status)
- * - order_dtl(id, order_id, product, qty, unit_px)
- * - temperatures(id, city, month, avg_temp, min_temp, max_temp)
- * <p>
- * You can inject the DataSource to access the database.
- * <p>
- * For running SQL queries, use the {@link DatabaseHelper} helper:
- * - {@code DatabaseHelper.query(dataSource, "SELECT * FROM employees")}
- * <p>
- * For state persistence, use the {@link StateStorage} helper:
- * - {@code StateStorage.persist("myKey", data)} to save
- * - {@code StateStorage.retrieve("myKey")} to load
- * <p>
- * For view utilities, use the {@link ViewHelper} helper:
- * - {@code ViewHelper.getStringProperty(json, "propertyName")} to extract a value from JSON
- * - {@code ViewHelper.setBackgroundColor(component, "blue")} to set a CSS background color
+ * TASKS:
+ * <ol>
+ *  <li>Showing data in a grid using natural language:</li>
+ *  Add a Grid and a chat input to the view. Set things up so that the user
+ *      can ask questions about the database in natural language and the grid
+ *      populates with the results. For example, asking "Show me all employees
+ *      with their name, department, and salary" should fill the grid.
+ *  <ul>
+ *  <li>
+ *  The application has an H2 in-memory database with these tables:
+ *  <ul>
+ *      <li>employees(id, name, department, salary, hire_date)</li>
+ *      <li>sales(id, product, category, region, amount, quantity, sale_date)</li>
+ *      <li>order_hdr(order_id, cust_name, order_dt, status)</li>
+ *      <li>order_dtl(id, order_id, product, qty, unit_px)</li>
+ *      <li>temperatures(id, city, month, avg_temp, min_temp, max_temp)</li>
+ *  </ul>
+ *  </li>
+ *  <li>You can inject the DataSource to access the database.</li>
+ *  <li>
+ *  For running SQL queries, use the {@link DatabaseHelper} helper:
+ *      {@code DatabaseHelper.query(dataSource, "SELECT * FROM employees")}
+ *  </li>
+ *  </ul>
+ *  <li>Visualizing data in a chart</li>
+ *  Replace the grid with a Chart component. Set things up so that the user
+ *      can ask for chart visualizations in natural language. For example,
+ *      asking "Show me a bar chart of total sales amount by product" should
+ *      render a chart.
+ *  <li>Persisting state</li>
+ *  Make it so that the chart survives a page refresh. When the user returns
+ *      to the page, the same chart should appear without asking the assistant
+ *      again.
+ *  For state persistence, use the {@link StateStorage} helper:
+ *  <ul>
+ *      <li>{@code StateStorage.persist("myKey", data)} to save</li>
+ *      <li>{@code StateStorage.retrieve("myKey")} to load</li>
+ *  </ul>
+ *  <li>Giving the AI a custom ability</li>
+ *  Give the AI the ability to change the view's background color to a CSS
+ *      color value (e.g., "blue", "#ff0000", "rgb(0,128,0)"). When the user
+ *      says something like "make the background blue", the background color
+ *      should change.
+ *  <p>
+ *  For view utilities, use the {@link ViewHelper} helper:
+ *  <ul>
+ *      <li>{@code ViewHelper.getStringProperty(json, "propertyName")} to
+ *          extract a value from JSON</li>
+ *      <li>{@code ViewHelper.setBackgroundColor(component, "blue")} to
+ *          set a CSS background color</li>
+ *  </ul>
+ * </ol>
  */
 @Route("")
 public class TaskView extends UploadDropZone {
