@@ -9,6 +9,8 @@ You can also start the application from the command line by running:
 
 ```bash
 export OPENAI_API_KEY=your-key-here
+or 
+export ANTHROPIC_API_KEY=your-key-here
 mvn spring-boot:run
 ```
 

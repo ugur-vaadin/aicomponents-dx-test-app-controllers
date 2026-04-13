@@ -3,9 +3,6 @@ package com.vaadin.dx;
 import javax.sql.DataSource;
 
 import com.vaadin.flow.component.html.Span;
-import org.springframework.ai.openai.OpenAiChatModel;
-import org.springframework.ai.openai.OpenAiChatOptions;
-import org.springframework.ai.openai.api.OpenAiApi;
 
 import com.vaadin.flow.component.ai.orchestrator.AIOrchestrator;
 import com.vaadin.flow.component.ai.provider.SpringAILLMProvider;
@@ -81,13 +78,7 @@ public class TaskView extends UploadDropZone {
         setSizeFull();
 
         // LLM provider
-        var openAiApi = OpenAiApi.builder()
-                .apiKey(System.getenv("OPENAI_API_KEY")).build();
-        var chatModel = OpenAiChatModel.builder().openAiApi(openAiApi)
-                .defaultOptions(OpenAiChatOptions.builder()
-                        .model("gpt-5.4-mini").build())
-                .build();
-        var provider = new SpringAILLMProvider(chatModel);
+        var provider = new SpringAILLMProvider(LLMHelper.getChatModel());
 
         // Chat UI
         var messageList = new MessageList();

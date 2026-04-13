@@ -4,11 +4,9 @@ import java.util.List;
 
 import javax.sql.DataSource;
 
+import com.vaadin.dx.LLMHelper;
 import com.vaadin.dx.ViewHelper;
 import com.vaadin.flow.component.html.Span;
-import org.springframework.ai.openai.OpenAiChatModel;
-import org.springframework.ai.openai.OpenAiChatOptions;
-import org.springframework.ai.openai.api.OpenAiApi;
 
 import com.vaadin.flow.component.ai.orchestrator.AIController;
 import com.vaadin.flow.component.ai.orchestrator.AIOrchestrator;
@@ -39,15 +37,10 @@ public class Solution4View extends UploadDropZone {
                 + "page. When the user asks, use the "
                 + "set_background_color tool.";
 
-        // --- UI setup ---
-        var openAiApi = OpenAiApi.builder()
-                .apiKey(System.getenv("OPENAI_API_KEY")).build();
-        var chatModel = OpenAiChatModel.builder().openAiApi(openAiApi)
-                .defaultOptions(OpenAiChatOptions.builder()
-                        .model("gpt-5.4-mini").build())
-                .build();
-        var provider = new SpringAILLMProvider(chatModel);
+        // LLM provider
+        var provider = new SpringAILLMProvider(LLMHelper.getChatModel());
 
+        // --- UI setup ---
         var messageList = new MessageList();
         messageList.setMarkdown(true);
         messageList.setWidthFull();
