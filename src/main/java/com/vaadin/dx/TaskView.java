@@ -30,11 +30,11 @@ import com.vaadin.flow.router.Route;
  *  <li>
  *  The application has an H2 in-memory database with these tables:
  *  <ul>
- *      <li>employees(id, name, department, salary, hire_date)</li>
- *      <li>sales(id, product, category, region, amount, quantity, sale_date)</li>
- *      <li>order_hdr(order_id, cust_name, order_dt, status)</li>
- *      <li>order_dtl(id, order_id, product, qty, unit_px)</li>
- *      <li>temperatures(id, city, month, avg_temp, min_temp, max_temp)</li>
+ *      <li>employees(id INT, name VARCHAR, department VARCHAR, salary DECIMAL, hire_date DATE)</li>
+ *      <li>sales(id INT, product VARCHAR, category VARCHAR, region VARCHAR, amount DECIMAL, quantity INT, sale_date DATE)</li>
+ *      <li>order_hdr(order_id INT, cust_name VARCHAR, order_dt DATE, status VARCHAR)</li>
+ *      <li>order_dtl(id INT, order_id INT, product VARCHAR, qty INT, unit_px DECIMAL)</li>
+ *      <li>temperatures(id INT, city VARCHAR, month VARCHAR, avg_temp DECIMAL, min_temp DECIMAL, max_temp DECIMAL)</li>
  *  </ul>
  *  </li>
  *  <li>You can inject the DataSource to access the database.</li>
