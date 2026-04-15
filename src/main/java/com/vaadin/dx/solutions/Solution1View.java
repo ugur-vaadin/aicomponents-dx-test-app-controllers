@@ -8,6 +8,7 @@ import javax.sql.DataSource;
 import com.vaadin.dx.DatabaseHelper;
 
 import com.vaadin.dx.LLMHelper;
+import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.html.Span;
 
 import com.vaadin.flow.component.ai.grid.GridAIController;
@@ -31,8 +32,6 @@ import com.vaadin.flow.router.Route;
 public class Solution1View extends UploadDropZone {
 
     public Solution1View(DataSource dataSource) {
-        setSizeFull();
-
         // --- Task 1: DatabaseProvider + Grid ---
         var db = new H2DatabaseProvider(dataSource);
 
@@ -45,39 +44,19 @@ public class Solution1View extends UploadDropZone {
         // LLM provider
         var provider = new SpringAILLMProvider(LLMHelper.getChatModel());
 
-        // --- UI setup ---
-        var messageList = new MessageList();
-        messageList.setMarkdown(true);
-        messageList.setWidthFull();
-        messageList.setHeightFull();
-        var messageInput = new MessageInput();
-        messageInput.setWidthFull();
-        var uploadManager = new UploadManager(this);
-        setUploadManager(uploadManager);
-        var fileList = new UploadFileList(uploadManager);
-        fileList.setWidthFull();
-
-        var chatPanel = new VerticalLayout(fileList, messageList,
-                messageInput);
-        chatPanel.setWidth("600px");
-        chatPanel.setHeightFull();
-        chatPanel.setPadding(false);
-        chatPanel.setSpacing(false);
-        chatPanel.expand(messageList);
+        // Chat UI
+        var chatPanel = createChatPanel();
 
         var contentPanel = new VerticalLayout(new Span("Content Area"), grid);
         contentPanel.setHeightFull();
         contentPanel.setPadding(true);
 
         AIOrchestrator.builder(provider, systemPrompt)
-                .withMessageList(messageList).withInput(messageInput)
-                .withFileReceiver(uploadManager)
+                .withMessageList(chatPanel.messageList).withInput(chatPanel.messageInput)
+                .withFileReceiver(chatPanel.uploadManager)
                 .withController(gridController).build();
 
-        var mainLayout = new HorizontalLayout(chatPanel, contentPanel);
-        mainLayout.setSizeFull();
-        mainLayout.expand(contentPanel);
-        setContent(mainLayout);
+        initMainLayout(chatPanel, contentPanel);
     }
 
     /**
@@ -108,6 +87,64 @@ public class Solution1View extends UploadDropZone {
         @Override
         public List<Map<String, Object>> executeQuery(String sql) {
             return DatabaseHelper.query(dataSource, sql);
+        }
+    }
+
+    private void initMainLayout(Component chatPanel, Component contentPanel) {
+        setSizeFull();
+        var mainLayout = new HorizontalLayout(chatPanel, contentPanel);
+        mainLayout.setSizeFull();
+        mainLayout.expand(contentPanel);
+        setContent(mainLayout);
+    }
+
+    private ChatPanel createChatPanel() {
+        var messageList = new MessageList();
+        messageList.setMarkdown(true);
+        messageList.setWidthFull();
+        messageList.setHeightFull();
+        var messageInput = new MessageInput();
+        messageInput.setWidthFull();
+        var uploadManager = new UploadManager(this);
+        setUploadManager(uploadManager);
+        var fileList = new UploadFileList(uploadManager);
+        fileList.setWidthFull();
+        return new ChatPanel(fileList, messageList, messageInput, uploadManager);
+    }
+
+    private static class ChatPanel extends VerticalLayout {
+        private final UploadFileList fileList;
+        private final MessageList messageList;
+        private final MessageInput messageInput;
+        private final UploadManager uploadManager;
+
+        ChatPanel(UploadFileList fileList, MessageList messageList, MessageInput messageInput, UploadManager uploadManager) {
+            this.fileList = fileList;
+            this.messageList = messageList;
+            this.messageInput = messageInput;
+            this.uploadManager = uploadManager;
+            add(fileList, messageList, messageInput);
+            setWidth("600px");
+            setHeightFull();
+            setPadding(false);
+            setSpacing(false);
+            expand(messageList);
+        }
+
+        UploadFileList getFileList() {
+            return fileList;
+        }
+
+        MessageList getMessageList() {
+            return messageList;
+        }
+
+        MessageInput getMessageInput() {
+            return messageInput;
+        }
+
+        UploadManager getUploadManager() {
+            return uploadManager;
         }
     }
 }

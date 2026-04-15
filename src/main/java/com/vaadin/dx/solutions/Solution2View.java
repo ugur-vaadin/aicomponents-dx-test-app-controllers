@@ -3,6 +3,7 @@ package com.vaadin.dx.solutions;
 import javax.sql.DataSource;
 
 import com.vaadin.dx.LLMHelper;
+import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.html.Span;
 
 import com.vaadin.flow.component.ai.chart.ChartAIController;
@@ -25,8 +26,6 @@ import com.vaadin.flow.router.Route;
 public class Solution2View extends UploadDropZone {
 
     public Solution2View(DataSource dataSource) {
-        setSizeFull();
-
         // --- Task 2: Chart ---
         var db = new Solution1View.H2DatabaseProvider(dataSource);
 
@@ -39,7 +38,30 @@ public class Solution2View extends UploadDropZone {
         // LLM provider
         var provider = new SpringAILLMProvider(LLMHelper.getChatModel());
 
-        // --- UI setup ---
+        // Chat UI
+        var chatPanel = createChatPanel();
+
+        var contentPanel = new VerticalLayout(new Span("Content Area"), chart);
+        contentPanel.setHeightFull();
+        contentPanel.setPadding(true);
+
+        AIOrchestrator.builder(provider, systemPrompt)
+                .withMessageList(chatPanel.messageList).withInput(chatPanel.messageInput)
+                .withFileReceiver(chatPanel.uploadManager)
+                .withController(chartController).build();
+
+        initMainLayout(chatPanel, contentPanel);
+    }
+
+    private void initMainLayout(Component chatPanel, Component contentPanel) {
+        setSizeFull();
+        var mainLayout = new HorizontalLayout(chatPanel, contentPanel);
+        mainLayout.setSizeFull();
+        mainLayout.expand(contentPanel);
+        setContent(mainLayout);
+    }
+
+    private ChatPanel createChatPanel() {
         var messageList = new MessageList();
         messageList.setMarkdown(true);
         messageList.setWidthFull();
@@ -50,27 +72,42 @@ public class Solution2View extends UploadDropZone {
         setUploadManager(uploadManager);
         var fileList = new UploadFileList(uploadManager);
         fileList.setWidthFull();
+        return new ChatPanel(fileList, messageList, messageInput, uploadManager);
+    }
 
-        var chatPanel = new VerticalLayout(fileList, messageList,
-                messageInput);
-        chatPanel.setWidth("600px");
-        chatPanel.setHeightFull();
-        chatPanel.setPadding(false);
-        chatPanel.setSpacing(false);
-        chatPanel.expand(messageList);
+    private static class ChatPanel extends VerticalLayout {
+        private final UploadFileList fileList;
+        private final MessageList messageList;
+        private final MessageInput messageInput;
+        private final UploadManager uploadManager;
 
-        var contentPanel = new VerticalLayout(new Span("Content Area"), chart);
-        contentPanel.setHeightFull();
-        contentPanel.setPadding(true);
+        ChatPanel(UploadFileList fileList, MessageList messageList, MessageInput messageInput, UploadManager uploadManager) {
+            this.fileList = fileList;
+            this.messageList = messageList;
+            this.messageInput = messageInput;
+            this.uploadManager = uploadManager;
+            add(fileList, messageList, messageInput);
+            setWidth("600px");
+            setHeightFull();
+            setPadding(false);
+            setSpacing(false);
+            expand(messageList);
+        }
 
-        AIOrchestrator.builder(provider, systemPrompt)
-                .withMessageList(messageList).withInput(messageInput)
-                .withFileReceiver(uploadManager)
-                .withController(chartController).build();
+        UploadFileList getFileList() {
+            return fileList;
+        }
 
-        var mainLayout = new HorizontalLayout(chatPanel, contentPanel);
-        mainLayout.setSizeFull();
-        mainLayout.expand(contentPanel);
-        setContent(mainLayout);
+        MessageList getMessageList() {
+            return messageList;
+        }
+
+        MessageInput getMessageInput() {
+            return messageInput;
+        }
+
+        UploadManager getUploadManager() {
+            return uploadManager;
+        }
     }
 }
