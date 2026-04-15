@@ -22,10 +22,10 @@ import com.vaadin.flow.router.Route;
  * TASKS:
  * <ol>
  *  <li>Showing data in a grid using natural language:</li>
- *  Add a Grid and a chat input to the view. Set things up so that the user
- *      can ask questions about the database in natural language and the grid
- *      populates with the results. For example, asking "Show me all employees
- *      with their name, department, and salary" should fill the grid.
+ *  Add a Grid to the view. Set things up so that the user can ask questions
+ *      about the database in natural language and the grid populates with
+ *      the results. For example, asking "Show me all employees with their
+ *      name, department, and salary" should fill the grid.
  *  <ul>
  *  <li>
  *  The application has an H2 in-memory database with these tables:
