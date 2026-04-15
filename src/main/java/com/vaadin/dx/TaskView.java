@@ -74,6 +74,9 @@ import com.vaadin.flow.router.Route;
  *          extract a value from JSON</li>
  *      <li>{@code ViewHelper.setBackgroundColor(component, "blue")} to
  *          set a CSS background color</li>
+ *      <li>{@code ViewHelper.buildParameterSchema(name, type, description)}
+ *          to build a tool's JSON parameter schema for a single required
+ *          parameter</li>
  *  </ul>
  * </ol>
  */

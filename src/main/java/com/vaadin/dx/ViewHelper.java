@@ -38,4 +38,36 @@ public class ViewHelper {
         component.getUI().ifPresent(ui -> ui.access(() -> component
                 .getElement().getStyle().set("background-color", color)));
     }
+
+    /**
+     * Builds a JSON schema string for a tool that accepts a single required
+     * parameter.
+     *
+     * @param name
+     *            the parameter name
+     * @param type
+     *            the JSON schema type (e.g., "string", "number")
+     * @param description
+     *            a human-readable description of the parameter
+     * @return the JSON schema as a string
+     */
+    public static String buildParameterSchema(String name, String type,
+                                               String description) {
+        var schema = JacksonUtils.createObjectNode();
+        schema.put("type", "object");
+
+        var property = JacksonUtils.createObjectNode();
+        property.put("type", type);
+        property.put("description", description);
+
+        var properties = JacksonUtils.createObjectNode();
+        properties.set(name, property);
+        schema.set("properties", properties);
+
+        var required = JacksonUtils.createArrayNode();
+        required.add(name);
+        schema.set("required", required);
+
+        return schema.toString();
+    }
 }

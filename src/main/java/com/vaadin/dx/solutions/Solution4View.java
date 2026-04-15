@@ -82,17 +82,8 @@ public class Solution4View extends UploadDropZone {
 
                 @Override
                 public String getParametersSchema() {
-                    return """
-                            {
-                              "type": "object",
-                              "properties": {
-                                "color": {
-                                  "type": "string",
-                                  "description": "CSS color value (e.g., 'blue', '#ff0000', 'rgb(0,128,0)')"
-                                }
-                              },
-                              "required": ["color"]
-                            }""";
+                    return ViewHelper.buildParameterSchema("color", "string",
+                            "CSS color value (e.g., 'blue', '#ff0000', 'rgb(0,128,0)')");
                 }
 
                 @Override
